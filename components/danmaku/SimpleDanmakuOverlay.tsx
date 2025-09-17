@@ -32,22 +32,22 @@ export const SimpleDanmakuOverlay: React.FC<SimpleDanmakuOverlayProps> = ({
       return;
     }
 
-    // 如果有弹幕数据，直接显示前几条用于测试
+    // 根据当前播放时间显示相应的弹幕
     if (danmakuList.length > 0) {
-      console.log('🎯 显示测试弹幕:', danmakuList.length);
-      setVisibleDanmaku(danmakuList.slice(0, 5)); // 显示前5条
+      // 显示当前时间前后10秒的弹幕
+      const timeWindow = 10;
+      const filtered = danmakuList.filter(item => {
+        const timeDiff = Math.abs(item.time - currentTime);
+        return timeDiff <= timeWindow;
+      });
+      
+      console.log('🎯 当前时间弹幕:', filtered.length, '当前时间:', currentTime.toFixed(1));
+      setVisibleDanmaku(filtered.slice(0, 8)); // 最多显示8条
       return;
     }
 
-    // 如果没有弹幕数据，创建一些测试弹幕
-    const testDanmaku = [
-      { text: '测试弹幕 - 这是第一条', time: 0, color: '#ffffff', mode: 0 },
-      { text: '测试弹幕 - 这是第二条', time: 0, color: '#ff6b6b', mode: 0 },
-      { text: '测试弹幕 - 这是第三条', time: 0, color: '#4ecdc4', mode: 0 },
-    ];
-    
-    console.log('🎯 使用默认测试弹幕');
-    setVisibleDanmaku(testDanmaku);
+    // 如果没有弹幕数据，显示空
+    setVisibleDanmaku([]);
   }, [danmakuList, currentTime, isPlaying, config.enabled]);
 
   if (!config.enabled) {
