@@ -188,7 +188,21 @@ export default function PlayScreen() {
         }
       } catch (error) {
         logger.error('弹幕加载失败:', error);
-        Toast.show({ type: 'error', text1: '弹幕加载失败' });
+        const errorMessage = error instanceof Error ? error.message : '弹幕加载失败';
+        
+        if (errorMessage.includes('配置服务器地址')) {
+          Toast.show({ 
+            type: 'error', 
+            text1: '弹幕功能需要配置', 
+            text2: '请在设置中配置 InfinityTV 服务器地址' 
+          });
+        } else {
+          Toast.show({ 
+            type: 'error', 
+            text1: '弹幕加载失败', 
+            text2: errorMessage 
+          });
+        }
       } finally {
         setDanmakuLoading(false);
       }
@@ -309,9 +323,31 @@ export default function PlayScreen() {
           config={danmakuConfig}
         />
 
-        {/* 调试信息已集成到滚动弹幕组件中 */}
-
-        {/* 基础弹幕测试已移除，现在使用服务层的测试数据 */}
+        {/* 开发模式下的弹幕测试按钮 */}
+        {__DEV__ && (
+          <View style={{ 
+            position: 'absolute', 
+            top: 100, 
+            left: 20, 
+            zIndex: 999 
+          }}>
+            <TouchableOpacity
+              style={{
+                backgroundColor: 'rgba(0, 255, 0, 0.8)',
+                padding: 10,
+                borderRadius: 5,
+              }}
+              onPress={async () => {
+                const { DanmakuTest } = await import('@/utils/danmakuTest');
+                DanmakuTest.testDanmakuAPI(title || '测试视频', '1');
+              }}
+            >
+              <Text style={{ color: 'white', fontSize: 12 }}>
+                测试弹幕API
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* 只在Video组件存在且正在加载时显示加载动画覆盖层 */}
         {currentEpisode?.url && isLoading && (
