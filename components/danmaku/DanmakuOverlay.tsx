@@ -35,40 +35,34 @@ export const DanmakuOverlay: React.FC<DanmakuOverlayProps> = ({
   const laneManagerRef = useRef<{ [key: number]: number }>({});
   const lastTimeRef = useRef(currentTime);
 
-  // 计算当前应该显示的弹幕
+  // 添加调试日志
+  useEffect(() => {
+    console.log('🎯 DanmakuOverlay 状态:', {
+      danmakuCount: danmakuList.length,
+      currentTime,
+      isPlaying,
+      enabled: config.enabled,
+      activeDanmaku: activeDanmakuRef.current.length
+    });
+  }, [danmakuList.length, currentTime, isPlaying, config.enabled]);
+
+  // 计算当前应该显示的弹幕 - 简化版本
   const currentDanmaku = useMemo(() => {
-    if (!config.enabled || !isPlaying) return [];
+    if (!config.enabled || !isPlaying || danmakuList.length === 0) {
+      console.log('🎯 弹幕被过滤:', { enabled: config.enabled, isPlaying, count: danmakuList.length });
+      return [];
+    }
 
-    const timeWindow = 5; // 5秒时间窗口
-    const startTime = Math.max(0, currentTime - 1);
-    const endTime = currentTime + timeWindow;
+    // 简化时间窗口逻辑
+    const timeWindow = 10; // 10秒时间窗口
+    const filtered = danmakuList.filter(item => {
+      const timeDiff = Math.abs(item.time - currentTime);
+      return timeDiff <= timeWindow;
+    });
 
-    return danmakuList
-      .filter(item => {
-        // 时间过滤
-        if (item.time < startTime || item.time > endTime) return false;
-        
-        // 类型过滤
-        if (item.mode === 1 && !config.showTop) return false;
-        if (item.mode === 2 && !config.showBottom) return false;
-        if (item.mode === 0 && !config.showScroll) return false;
-        
-        // 内容过滤
-        if (config.filterLevel > 0) {
-          const text = item.text.toLowerCase();
-          // 简单的内容过滤逻辑
-          if (config.filterLevel >= 2 && (text.includes('666') || text.includes('哈哈'))) {
-            return false;
-          }
-          if (config.filterLevel >= 3 && text.length < 3) {
-            return false;
-          }
-        }
-        
-        return true;
-      })
-      .slice(0, Math.floor(config.density * 100)); // 密度控制
-  }, [danmakuList, currentTime, isPlaying, config]);
+    console.log('🎯 过滤后弹幕:', filtered.length, '当前时间:', currentTime);
+    return filtered.slice(0, 20); // 限制最多20条
+  }, [danmakuList, currentTime, isPlaying, config.enabled]);
 
   // 更新活跃弹幕列表
   useEffect(() => {

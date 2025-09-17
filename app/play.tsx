@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useCallback, memo, useMemo } from "react";
-import { StyleSheet, TouchableOpacity, BackHandler, AppState, AppStateStatus, View } from "react-native";
+import { StyleSheet, TouchableOpacity, BackHandler, AppState, AppStateStatus, View, Text } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Video } from "expo-av";
 import { useKeepAwake } from "expo-keep-awake";
@@ -11,7 +11,9 @@ import { SpeedSelectionModal } from "@/components/SpeedSelectionModal";
 import { SeekingBar } from "@/components/SeekingBar";
 // import { NextEpisodeOverlay } from "@/components/NextEpisodeOverlay";
 import VideoLoadingAnimation from "@/components/VideoLoadingAnimation";
-import { DanmakuOverlay } from "@/components/danmaku/DanmakuOverlay";
+import { SimpleDanmakuOverlay } from "@/components/danmaku/SimpleDanmakuOverlay";
+import { DanmakuDebugInfo } from "@/components/danmaku/DanmakuDebugInfo";
+import { BasicDanmakuTest } from "@/components/danmaku/BasicDanmakuTest";
 import { DanmakuConfigPanel } from "@/components/danmaku/DanmakuConfigPanel";
 import useDetailStore from "@/stores/detailStore";
 import { useTVRemoteHandler } from "@/hooks/useTVRemoteHandler";
@@ -117,19 +119,19 @@ export default function PlayScreen() {
   } = usePlayerStore();
   const currentEpisode = usePlayerStore(selectCurrentEpisode);
 
-  // 弹幕相关状态 - 暂时注释掉
-  // const {
-  //   danmakuList,
-  //   config: danmakuConfig,
-  //   showConfigPanel,
-  //   isLoading: danmakuLoading,
-  //   setDanmakuList,
-  //   setLoading: setDanmakuLoading,
-  //   setShowConfigPanel,
-  //   updateConfig: updateDanmakuConfig,
-  //   loadConfig: loadDanmakuConfig,
-  //   clearDanmaku,
-  // } = useDanmakuStore();
+  // 弹幕相关状态
+  const {
+    danmakuList,
+    config: danmakuConfig,
+    showConfigPanel,
+    isLoading: danmakuLoading,
+    setDanmakuList,
+    setLoading: setDanmakuLoading,
+    setShowConfigPanel,
+    updateConfig: updateDanmakuConfig,
+    loadConfig: loadDanmakuConfig,
+    clearDanmaku,
+  } = useDanmakuStore();
 
   // 使用Video事件处理hook
   const { videoProps } = useVideoHandlers({
@@ -149,35 +151,58 @@ export default function PlayScreen() {
   // 优化的动态样式 - 使用useMemo避免重复计算
   const dynamicStyles = useMemo(() => createResponsiveStyles(deviceType), [deviceType]);
 
-  // 加载弹幕配置 - 暂时注释掉
-  // useEffect(() => {
-  //   loadDanmakuConfig();
-  // }, [loadDanmakuConfig]);
+  // 加载弹幕配置
+  useEffect(() => {
+    loadDanmakuConfig();
+  }, [loadDanmakuConfig]);
 
-  // 加载弹幕数据 - 暂时注释掉
-  // useEffect(() => {
-  //   const loadDanmaku = async () => {
-  //     if (!title || !danmakuConfig.enabled) {
-  //       clearDanmaku();
-  //       return;
-  //     }
+  // 加载弹幕数据
+  useEffect(() => {
+    const loadDanmaku = async () => {
+      if (!title || !danmakuConfig.enabled) {
+        clearDanmaku();
+        return;
+      }
 
-  //     setDanmakuLoading(true);
-  //     try {
-  //       const episodeStr = currentEpisode?.title || (episodeIndex > 0 ? String(episodeIndex + 1) : undefined);
-  //       const danmaku = await DanmakuService.fetchDanmaku(title, episodeStr, id);
-  //       setDanmakuList(danmaku);
-  //       logger.info(`🎯 弹幕加载完成: ${danmaku.length} 条`);
-  //     } catch (error) {
-  //       logger.error('弹幕加载失败:', error);
-  //       Toast.show({ type: 'error', text1: '弹幕加载失败' });
-  //     } finally {
-  //       setDanmakuLoading(false);
-  //     }
-  //   };
+      setDanmakuLoading(true);
+      try {
+        const episodeStr = currentEpisode?.title || (episodeIndex > 0 ? String(episodeIndex + 1) : undefined);
+        logger.info(`🎯 开始加载弹幕: ${title}, 集数: ${episodeStr}`);
 
-  //   loadDanmaku();
-  // }, [title, episodeIndex, currentEpisode?.title, id, danmakuConfig.enabled, setDanmakuList, setDanmakuLoading, clearDanmaku]);
+        let danmaku = await DanmakuService.fetchDanmaku(title, episodeStr, id);
+
+        // 如果没有获取到弹幕，添加测试数据
+        if (danmaku.length === 0) {
+          logger.info('🎯 未获取到弹幕，使用测试数据');
+          danmaku = [
+            { text: '测试弹幕1 - 开始播放', time: 10, color: '#ffffff', mode: 0 },
+            { text: '测试弹幕2 - 精彩片段', time: 30, color: '#ff6b6b', mode: 0 },
+            { text: '测试弹幕3 - 顶部弹幕', time: 60, color: '#4ecdc4', mode: 1 },
+            { text: '测试弹幕4 - 底部弹幕', time: 90, color: '#45b7d1', mode: 2 },
+            { text: '测试弹幕5 - 中间段落', time: 120, color: '#96ceb4', mode: 0 },
+          ];
+        }
+
+        setDanmakuList(danmaku);
+        logger.info(`🎯 弹幕加载完成: ${danmaku.length} 条`);
+      } catch (error) {
+        logger.error('弹幕加载失败:', error);
+
+        // 加载失败时也提供测试数据
+        const testDanmaku = [
+          { text: '网络错误 - 测试弹幕', time: 5, color: '#ff4757', mode: 0 },
+          { text: '这是测试弹幕数据', time: 15, color: '#ffa502', mode: 0 },
+        ];
+        setDanmakuList(testDanmaku);
+
+        Toast.show({ type: 'info', text1: '使用测试弹幕数据' });
+      } finally {
+        setDanmakuLoading(false);
+      }
+    };
+
+    loadDanmaku();
+  }, [title, episodeIndex, currentEpisode?.title, id, danmakuConfig.enabled, setDanmakuList, setDanmakuLoading, clearDanmaku]);
 
   useEffect(() => {
     const perfStart = performance.now();
@@ -197,9 +222,9 @@ export default function PlayScreen() {
     return () => {
       logger.info(`[PERF] PlayScreen unmounting - calling reset()`);
       reset(); // Reset state when component unmounts
-      // clearDanmaku(); // 清理弹幕数据
+      clearDanmaku(); // 清理弹幕数据
     };
-  }, [episodeIndex, source, position, setVideoRef, reset, loadVideo, id, title]);
+  }, [episodeIndex, source, position, setVideoRef, reset, loadVideo, id, title, clearDanmaku]);
 
   // 优化的屏幕点击处理
   const onScreenPress = useCallback(() => {
@@ -277,21 +302,25 @@ export default function PlayScreen() {
           <LoadingContainer style={dynamicStyles.loadingContainer} currentEpisode={currentEpisode} />
         )}
 
-        {showControls && deviceType === "tv" && (
+        {showControls && (
           <PlayerControls showControls={showControls} setShowControls={setShowControls} />
         )}
 
         <SeekingBar />
 
-        {/* 弹幕渲染层 - 暂时注释掉 */}
-        {/* {currentEpisode?.url && danmakuConfig.enabled && (
-          <DanmakuOverlay
-            danmakuList={danmakuList}
-            currentTime={status?.positionMillis ? status.positionMillis / 1000 : 0}
-            isPlaying={status?.isPlaying || false}
-            config={danmakuConfig}
-          />
-        )} */}
+        {/* 弹幕渲染层 - 使用简化版本进行测试 */}
+        <SimpleDanmakuOverlay
+          danmakuList={danmakuList}
+          currentTime={status?.positionMillis ? status.positionMillis / 1000 : 0}
+          isPlaying={status?.isPlaying || false}
+          config={danmakuConfig}
+        />
+
+        {/* 弹幕调试信息 */}
+        <DanmakuDebugInfo />
+
+        {/* 基础弹幕测试 - 确保渲染层正常工作 */}
+        <BasicDanmakuTest />
 
         {/* 只在Video组件存在且正在加载时显示加载动画覆盖层 */}
         {currentEpisode?.url && isLoading && (
@@ -307,13 +336,13 @@ export default function PlayScreen() {
       <SourceSelectionModal />
       <SpeedSelectionModal />
 
-      {/* 弹幕配置面板 - 暂时注释掉 */}
-      {/* <DanmakuConfigPanel
+      {/* 弹幕配置面板 */}
+      <DanmakuConfigPanel
         visible={showConfigPanel}
         config={danmakuConfig}
         onConfigChange={updateDanmakuConfig}
         onClose={() => setShowConfigPanel(false)}
-      /> */}
+      />
     </ThemedView>
   );
 }

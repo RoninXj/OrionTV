@@ -99,12 +99,18 @@ export class DanmakuService {
         const searchUrl = `https://www.caiji.cyou/api.php/provide/vod/?wd=${encodeURIComponent(searchTitle)}`;
         
         try {
+          // 使用 Promise.race 实现超时
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 10000);
+          
           const response = await fetch(searchUrl, {
             headers: {
               'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
             },
-            timeout: 10000,
+            signal: controller.signal,
           });
+          
+          clearTimeout(timeoutId);
 
           if (!response.ok) continue;
 
@@ -259,9 +265,14 @@ export class DanmakuService {
 
     for (const apiUrl of xmlApiUrls) {
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 20000);
+        
         const response = await fetch(`${apiUrl}/?url=${encodeURIComponent(url)}`, {
-          timeout: 20000,
+          signal: controller.signal,
         });
+        
+        clearTimeout(timeoutId);
 
         if (!response.ok) continue;
 
@@ -283,9 +294,14 @@ export class DanmakuService {
     try {
       const apiUrl = `https://api.danmu.icu/?url=${encodeURIComponent(url)}`;
       
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 25000);
+      
       const response = await fetch(apiUrl, {
-        timeout: 25000,
+        signal: controller.signal,
       });
+      
+      clearTimeout(timeoutId);
 
       if (!response.ok) return [];
 
