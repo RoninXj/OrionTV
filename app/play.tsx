@@ -11,12 +11,16 @@ import { SpeedSelectionModal } from "@/components/SpeedSelectionModal";
 import { SeekingBar } from "@/components/SeekingBar";
 // import { NextEpisodeOverlay } from "@/components/NextEpisodeOverlay";
 import VideoLoadingAnimation from "@/components/VideoLoadingAnimation";
+import { DanmakuOverlay } from "@/components/danmaku/DanmakuOverlay";
+import { DanmakuConfigPanel } from "@/components/danmaku/DanmakuConfigPanel";
 import useDetailStore from "@/stores/detailStore";
 import { useTVRemoteHandler } from "@/hooks/useTVRemoteHandler";
 import Toast from "react-native-toast-message";
 import usePlayerStore, { selectCurrentEpisode } from "@/stores/playerStore";
 import { useResponsiveLayout } from "@/hooks/useResponsiveLayout";
 import { useVideoHandlers } from "@/hooks/useVideoHandlers";
+import { useDanmakuStore } from "@/stores/danmakuStore";
+import { DanmakuService } from "@/services/DanmakuService";
 import Logger from '@/utils/Logger';
 
 const logger = Logger.withTag('PlayScreen');
@@ -25,8 +29,7 @@ const logger = Logger.withTag('PlayScreen');
 const LoadingContainer = memo(
   ({ style, currentEpisode }: { style: any; currentEpisode: { url: string; title: string } | undefined }) => {
     logger.info(
-      `[PERF] Video component NOT rendered - waiting for valid URL. currentEpisode: ${!!currentEpisode}, url: ${
-        currentEpisode?.url ? "exists" : "missing"
+      `[PERF] Video component NOT rendered - waiting for valid URL. currentEpisode: ${!!currentEpisode}, url: ${currentEpisode?.url ? "exists" : "missing"
       }`
     );
     return (
@@ -104,6 +107,7 @@ export default function PlayScreen() {
     initialPosition,
     introEndTime,
     playbackRate,
+    status,
     setVideoRef,
     handlePlaybackStatusUpdate,
     setShowControls,
@@ -112,6 +116,20 @@ export default function PlayScreen() {
     loadVideo,
   } = usePlayerStore();
   const currentEpisode = usePlayerStore(selectCurrentEpisode);
+
+  // 弹幕相关状态 - 暂时注释掉
+  // const {
+  //   danmakuList,
+  //   config: danmakuConfig,
+  //   showConfigPanel,
+  //   isLoading: danmakuLoading,
+  //   setDanmakuList,
+  //   setLoading: setDanmakuLoading,
+  //   setShowConfigPanel,
+  //   updateConfig: updateDanmakuConfig,
+  //   loadConfig: loadDanmakuConfig,
+  //   clearDanmaku,
+  // } = useDanmakuStore();
 
   // 使用Video事件处理hook
   const { videoProps } = useVideoHandlers({
@@ -131,6 +149,36 @@ export default function PlayScreen() {
   // 优化的动态样式 - 使用useMemo避免重复计算
   const dynamicStyles = useMemo(() => createResponsiveStyles(deviceType), [deviceType]);
 
+  // 加载弹幕配置 - 暂时注释掉
+  // useEffect(() => {
+  //   loadDanmakuConfig();
+  // }, [loadDanmakuConfig]);
+
+  // 加载弹幕数据 - 暂时注释掉
+  // useEffect(() => {
+  //   const loadDanmaku = async () => {
+  //     if (!title || !danmakuConfig.enabled) {
+  //       clearDanmaku();
+  //       return;
+  //     }
+
+  //     setDanmakuLoading(true);
+  //     try {
+  //       const episodeStr = currentEpisode?.title || (episodeIndex > 0 ? String(episodeIndex + 1) : undefined);
+  //       const danmaku = await DanmakuService.fetchDanmaku(title, episodeStr, id);
+  //       setDanmakuList(danmaku);
+  //       logger.info(`🎯 弹幕加载完成: ${danmaku.length} 条`);
+  //     } catch (error) {
+  //       logger.error('弹幕加载失败:', error);
+  //       Toast.show({ type: 'error', text1: '弹幕加载失败' });
+  //     } finally {
+  //       setDanmakuLoading(false);
+  //     }
+  //   };
+
+  //   loadDanmaku();
+  // }, [title, episodeIndex, currentEpisode?.title, id, danmakuConfig.enabled, setDanmakuList, setDanmakuLoading, clearDanmaku]);
+
   useEffect(() => {
     const perfStart = performance.now();
     logger.info(`[PERF] PlayScreen useEffect START - source: ${source}, id: ${id}, title: ${title}`);
@@ -149,6 +197,7 @@ export default function PlayScreen() {
     return () => {
       logger.info(`[PERF] PlayScreen unmounting - calling reset()`);
       reset(); // Reset state when component unmounts
+      // clearDanmaku(); // 清理弹幕数据
     };
   }, [episodeIndex, source, position, setVideoRef, reset, loadVideo, id, title]);
 
@@ -234,6 +283,16 @@ export default function PlayScreen() {
 
         <SeekingBar />
 
+        {/* 弹幕渲染层 - 暂时注释掉 */}
+        {/* {currentEpisode?.url && danmakuConfig.enabled && (
+          <DanmakuOverlay
+            danmakuList={danmakuList}
+            currentTime={status?.positionMillis ? status.positionMillis / 1000 : 0}
+            isPlaying={status?.isPlaying || false}
+            config={danmakuConfig}
+          />
+        )} */}
+
         {/* 只在Video组件存在且正在加载时显示加载动画覆盖层 */}
         {currentEpisode?.url && isLoading && (
           <View style={dynamicStyles.loadingContainer}>
@@ -247,6 +306,14 @@ export default function PlayScreen() {
       <EpisodeSelectionModal />
       <SourceSelectionModal />
       <SpeedSelectionModal />
+
+      {/* 弹幕配置面板 - 暂时注释掉 */}
+      {/* <DanmakuConfigPanel
+        visible={showConfigPanel}
+        config={danmakuConfig}
+        onConfigChange={updateDanmakuConfig}
+        onClose={() => setShowConfigPanel(false)}
+      /> */}
     </ThemedView>
   );
 }

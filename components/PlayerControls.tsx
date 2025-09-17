@@ -3,10 +3,12 @@ import { View, Text, StyleSheet, Pressable } from "react-native";
 import { Pause, Play, SkipForward, List, Tv, ArrowDownToDot, ArrowUpFromDot, Gauge } from "lucide-react-native";
 import { ThemedText } from "@/components/ThemedText";
 import { MediaButton } from "@/components/MediaButton";
+import { DanmakuControls } from "@/components/danmaku/DanmakuControls";
 
 import usePlayerStore from "@/stores/playerStore";
 import useDetailStore from "@/stores/detailStore";
 import { useSources } from "@/stores/sourceStore";
+import { useDanmakuStore } from "@/stores/danmakuStore";
 
 interface PlayerControlsProps {
   showControls: boolean;
@@ -35,6 +37,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({ showControls, se
 
   const { detail } = useDetailStore();
   const resources = useSources();
+  const { config, danmakuList, updateConfig, setShowConfigPanel } = useDanmakuStore();
 
   const videoTitle = detail?.title || "";
   const currentEpisode = episodes[currentEpisodeIndex];
@@ -118,6 +121,14 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({ showControls, se
           <MediaButton onPress={() => setShowSourceModal(true)}>
             <Tv color="white" size={24} />
           </MediaButton>
+
+          {/* 弹幕控制按钮 */}
+          <DanmakuControls
+            enabled={config.enabled}
+            onToggle={() => updateConfig({ enabled: !config.enabled })}
+            onOpenSettings={() => setShowConfigPanel(true)}
+            danmakuCount={danmakuList.length}
+          />
         </View>
       </View>
     </View>
