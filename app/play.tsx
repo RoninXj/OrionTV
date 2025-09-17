@@ -12,6 +12,7 @@ import { SeekingBar } from "@/components/SeekingBar";
 
 import VideoLoadingAnimation from "@/components/VideoLoadingAnimation";
 import { ArtPlayerStyleDanmaku } from "@/components/danmaku/ArtPlayerStyleDanmaku";
+import { DanmakuAreaIndicator } from "@/components/danmaku/DanmakuAreaIndicator";
 // 调试信息已集成到滚动弹幕组件中
 // 移除基础测试组件导入
 import { DanmakuConfigPanel } from "@/components/danmaku/DanmakuConfigPanel";
@@ -314,6 +315,11 @@ export default function PlayScreen() {
 
         <SeekingBar />
 
+        {/* 弹幕区域指示器 - 仅开发模式 */}
+        {__DEV__ && (
+          <DanmakuAreaIndicator config={danmakuConfig} />
+        )}
+
         {/* 弹幕渲染层 - ArtPlayer 风格弹幕系统 */}
         <ArtPlayerStyleDanmaku
           danmakuList={danmakuList}
@@ -370,6 +376,7 @@ export default function PlayScreen() {
                 backgroundColor: 'rgba(255, 0, 0, 0.8)',
                 padding: 8,
                 borderRadius: 5,
+                marginRight: 10,
               }}
               onPress={async () => {
                 const { DanmakuDebug } = await import('@/utils/danmakuDebug');
@@ -378,6 +385,47 @@ export default function PlayScreen() {
             >
               <Text style={{ color: 'white', fontSize: 10 }}>
                 清理缓存
+              </Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={{
+                backgroundColor: 'rgba(128, 0, 128, 0.8)',
+                padding: 8,
+                borderRadius: 5,
+                marginRight: 10,
+              }}
+              onPress={() => {
+                if ((global as any).DanmakuPerformance) {
+                  (global as any).DanmakuPerformance.getReport();
+                  (global as any).DanmakuPerformance.getRecommendations();
+                }
+              }}
+            >
+              <Text style={{ color: 'white', fontSize: 10 }}>
+                性能报告
+              </Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={{
+                backgroundColor: 'rgba(0, 128, 255, 0.8)',
+                padding: 8,
+                borderRadius: 5,
+              }}
+              onPress={async () => {
+                const { DanmakuPositionDebug } = await import('@/utils/danmakuPositionDebug');
+                console.log(DanmakuPositionDebug.generatePositionReport(danmakuConfig.fontSize));
+                const testCases = DanmakuPositionDebug.generateTestPositions(danmakuConfig.fontSize);
+                console.log('🧪 弹幕位置测试:');
+                testCases.forEach(test => {
+                  const status = test.isValid ? '✅' : '❌';
+                  console.log(`${status} ${test.modeName} 轨道${test.lane}: ${test.position.toFixed(0)}px`);
+                });
+              }}
+            >
+              <Text style={{ color: 'white', fontSize: 10 }}>
+                位置调试
               </Text>
             </TouchableOpacity>
           </View>
