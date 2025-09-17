@@ -1,18 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DanmakuItem } from '@/stores/danmakuStore';
 
-interface PlatformUrl {
-  platform: string;
-  url: string;
-}
-
-interface DanmakuApiResponse {
-  code: number;
-  name: string;
-  danum: number;
-  danmuku: any[];
-}
-
 export class DanmakuService {
   private static readonly CACHE_PREFIX = 'danmaku_cache_';
   private static readonly CACHE_EXPIRY = 24 * 60 * 60 * 1000; // 24小时

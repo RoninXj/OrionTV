@@ -9,7 +9,7 @@ import { EpisodeSelectionModal } from "@/components/EpisodeSelectionModal";
 import { SourceSelectionModal } from "@/components/SourceSelectionModal";
 import { SpeedSelectionModal } from "@/components/SpeedSelectionModal";
 import { SeekingBar } from "@/components/SeekingBar";
-// import { NextEpisodeOverlay } from "@/components/NextEpisodeOverlay";
+
 import VideoLoadingAnimation from "@/components/VideoLoadingAnimation";
 import { ArtPlayerStyleDanmaku } from "@/components/danmaku/ArtPlayerStyleDanmaku";
 // 调试信息已集成到滚动弹幕组件中
@@ -105,7 +105,7 @@ export default function PlayScreen() {
   const {
     isLoading,
     showControls,
-    // showNextEpisodeOverlay,
+
     initialPosition,
     introEndTime,
     playbackRate,
@@ -113,7 +113,7 @@ export default function PlayScreen() {
     setVideoRef,
     handlePlaybackStatusUpdate,
     setShowControls,
-    // setShowNextEpisodeOverlay,
+
     reset,
     loadVideo,
   } = usePlayerStore();
@@ -124,7 +124,6 @@ export default function PlayScreen() {
     danmakuList,
     config: danmakuConfig,
     showConfigPanel,
-    isLoading: danmakuLoading,
     setDanmakuList,
     setLoading: setDanmakuLoading,
     setShowConfigPanel,
@@ -172,35 +171,35 @@ export default function PlayScreen() {
         const danmaku = await DanmakuService.fetchDanmaku(title, episodeStr, id);
         setDanmakuList(danmaku);
         logger.info(`🎯 弹幕加载完成: ${danmaku.length} 条`);
-        
+
         if (danmaku.length > 0) {
-          Toast.show({ 
-            type: 'success', 
-            text1: `弹幕加载成功`, 
-            text2: `获取到 ${danmaku.length} 条弹幕数据` 
+          Toast.show({
+            type: 'success',
+            text1: `弹幕加载成功`,
+            text2: `获取到 ${danmaku.length} 条弹幕数据`
           });
         } else {
-          Toast.show({ 
-            type: 'info', 
-            text1: '未找到弹幕数据', 
-            text2: '该视频可能暂无弹幕' 
+          Toast.show({
+            type: 'info',
+            text1: '未找到弹幕数据',
+            text2: '该视频可能暂无弹幕'
           });
         }
       } catch (error) {
         logger.error('弹幕加载失败:', error);
         const errorMessage = error instanceof Error ? error.message : '弹幕加载失败';
-        
+
         if (errorMessage.includes('配置服务器地址')) {
-          Toast.show({ 
-            type: 'error', 
-            text1: '弹幕功能需要配置', 
-            text2: '请在设置中配置 InfinityTV 服务器地址' 
+          Toast.show({
+            type: 'error',
+            text1: '弹幕功能需要配置',
+            text2: '请在设置中配置 InfinityTV 服务器地址'
           });
         } else {
-          Toast.show({ 
-            type: 'error', 
-            text1: '弹幕加载失败', 
-            text2: errorMessage 
+          Toast.show({
+            type: 'error',
+            text1: '弹幕加载失败',
+            text2: errorMessage
           });
         }
       } finally {
@@ -325,11 +324,11 @@ export default function PlayScreen() {
 
         {/* 开发模式下的弹幕测试按钮 */}
         {__DEV__ && (
-          <View style={{ 
-            position: 'absolute', 
-            top: 100, 
-            left: 20, 
-            zIndex: 999 
+          <View style={{
+            position: 'absolute',
+            top: 100,
+            left: 20,
+            zIndex: 999
           }}>
             <TouchableOpacity
               style={{
@@ -356,7 +355,7 @@ export default function PlayScreen() {
           </View>
         )}
 
-        {/* <NextEpisodeOverlay visible={showNextEpisodeOverlay} onCancel={() => setShowNextEpisodeOverlay(false)} /> */}
+
       </TouchableOpacity>
 
       <EpisodeSelectionModal />
