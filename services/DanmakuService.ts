@@ -18,7 +18,7 @@ export class DanmakuService {
   private static readonly CACHE_EXPIRY = 24 * 60 * 60 * 1000; // 24小时
 
   /**
-   * 获取弹幕数据
+   * 获取弹幕数据 - 主入口
    */
   static async fetchDanmaku(
     title: string, 
@@ -28,90 +28,51 @@ export class DanmakuService {
     try {
       console.log('🎯 开始获取弹幕:', { title, episode, videoId });
       
-      // 先返回丰富的测试数据，确保弹幕系统正常工作
-      const testDanmaku = this.generateTestDanmaku(title);
-      console.log('🧪 使用测试弹幕数据:', testDanmaku.length, '条');
+      // 生成缓存键
+      const cacheKey = this.generateCacheKey(title, episode, videoId);
       
-      // 异步尝试获取真实弹幕数据（不阻塞测试数据返回）
-      this.fetchRealDanmaku(title, episode, videoId).then(realDanmaku => {
-        if (realDanmaku.length > 0) {
-          console.log('🎉 真实弹幕获取成功:', realDanmaku.length, '条');
-          // 这里可以通过事件或回调更新弹幕数据
-        }
-      }).catch(error => {
-        console.log('⚠️ 真实弹幕获取失败，继续使用测试数据:', error.message);
-      });
+      // 尝试从缓存获取
+      const cached = await this.getCachedDanmaku(cacheKey);
+      if (cached) {
+        console.log('📦 使用缓存弹幕:', cached.length, '条');
+        return cached;
+      }
+
+      // 获取真实弹幕数据
+      const realDanmaku = await this.fetchRealDanmaku(title, episode, videoId);
       
-      return testDanmaku;
+      if (realDanmaku.length > 0) {
+        console.log('🎉 真实弹幕获取成功:', realDanmaku.length, '条');
+        // 缓存结果
+        await this.cacheDanmaku(cacheKey, realDanmaku);
+        return realDanmaku;
+      } else {
+        console.log('⚠️ 未获取到真实弹幕数据');
+        return [];
+      }
 
     } catch (error) {
       console.error('❌ 弹幕获取失败:', error);
-      return this.generateTestDanmaku(title);
+      return [];
     }
   }
 
   /**
-   * 生成测试弹幕数据
-   */
-  private static generateTestDanmaku(title: string): DanmakuItem[] {
-    const testComments = [
-      '开始了开始了！',
-      '这部剧太好看了',
-      '演技在线',
-      '剧情不错',
-      '特效很棒',
-      '音乐很好听',
-      '这个演员演得真好',
-      '期待后续剧情',
-      '画面很美',
-      '导演厉害',
-      '这个镜头绝了',
-      '台词很有意思',
-      '服装很精美',
-      '场景很震撼',
-      '这段很感人',
-      '笑死我了哈哈哈',
-      '太刺激了',
-      '这个转折意外',
-      '配乐很棒',
-      '摄影很专业'
-    ];
-
-    const colors = ['#ffffff', '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3', '#54a0ff'];
-    const modes = [0, 0, 0, 1, 2]; // 大部分是滚动弹幕
-
-    return Array.from({ length: 50 }, (_, index) => ({
-      text: `${testComments[index % testComments.length]} - ${title}`,
-      time: index * 3 + Math.random() * 2, // 每3秒左右一条弹幕
-      color: colors[index % colors.length],
-      mode: modes[index % modes.length],
-    }));
-  }
-
-  /**
-   * 异步获取真实弹幕数据
+   * 获取真实弹幕数据
    */
   private static async fetchRealDanmaku(
     title: string, 
     episode?: string, 
     videoId?: string
   ): Promise<DanmakuItem[]> {
-    // 生成缓存键
-    const cacheKey = this.generateCacheKey(title, episode, videoId);
-    
-    // 尝试从缓存获取
-    const cached = await this.getCachedDanmaku(cacheKey);
-    if (cached) {
-      console.log('📦 使用缓存弹幕:', cached.length, '条');
-      return cached;
-    }
-
     // 搜索视频链接
     const platformUrls = await this.searchVideoUrls(title, episode);
     if (platformUrls.length === 0) {
       console.log('❌ 未找到匹配的视频链接');
-      throw new Error('未找到匹配的视频链接');
+      return [];
     }
+
+    console.log(`🔍 找到 ${platformUrls.length} 个平台链接:`, platformUrls.map(p => p.platform));
 
     // 并发获取多个平台的弹幕
     const danmakuPromises = platformUrls.map(({ platform, url }) => 
@@ -126,17 +87,19 @@ export class DanmakuService {
       if (result.status === 'fulfilled' && result.value.length > 0) {
         console.log(`✅ ${platformUrls[index].platform} 获取到 ${result.value.length} 条弹幕`);
         allDanmaku = allDanmaku.concat(result.value);
+      } else if (result.status === 'rejected') {
+        console.log(`❌ ${platformUrls[index].platform} 弹幕获取失败:`, result.reason);
       }
     });
+
+    if (allDanmaku.length === 0) {
+      console.log('❌ 所有平台都未获取到弹幕数据');
+      return [];
+    }
 
     // 处理和过滤弹幕
     const processedDanmaku = this.processDanmakuData(allDanmaku);
     
-    // 缓存结果
-    if (processedDanmaku.length > 0) {
-      await this.cacheDanmaku(cacheKey, processedDanmaku);
-    }
-
     return processedDanmaku;
   }
 
@@ -161,7 +124,7 @@ export class DanmakuService {
         const searchUrl = `https://www.caiji.cyou/api.php/provide/vod/?wd=${encodeURIComponent(searchTitle)}`;
         
         try {
-          // 使用 Promise.race 实现超时
+          // 使用 AbortController 实现超时
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 10000);
           
@@ -185,7 +148,7 @@ export class DanmakuService {
             return this.extractPlatformUrls(bestMatch, episode);
           }
         } catch (error) {
-          console.log(`搜索 "${searchTitle}" 失败:`, error);
+          console.log(`搜索 "${searchTitle}" 失败:`, error instanceof Error ? error.message : error);
           continue;
         }
       }
@@ -300,18 +263,29 @@ export class DanmakuService {
    * 从平台获取弹幕
    */
   private static async fetchDanmakuFromPlatform(platform: string, url: string): Promise<DanmakuItem[]> {
+    console.log(`🔄 开始从 ${platform} 获取弹幕:`, url);
+    
     try {
       // 首先尝试 XML API
       let danmaku = await this.fetchFromXMLAPI(url);
+      console.log(`📊 ${platform} XML API 结果: ${danmaku.length} 条弹幕`);
       
       if (danmaku.length === 0) {
+        console.log(`🔄 ${platform} XML API 无结果，尝试 JSON API...`);
         // XML API 无结果，尝试 JSON API
         danmaku = await this.fetchFromJSONAPI(url);
+        console.log(`📊 ${platform} JSON API 结果: ${danmaku.length} 条弹幕`);
+      }
+
+      if (danmaku.length > 0) {
+        console.log(`✅ ${platform} 弹幕获取成功: ${danmaku.length} 条`);
+      } else {
+        console.log(`❌ ${platform} 未获取到弹幕数据`);
       }
 
       return danmaku;
     } catch (error) {
-      console.error(`从 ${platform} 获取弹幕失败:`, error);
+      console.error(`❌ 从 ${platform} 获取弹幕失败:`, error instanceof Error ? error.message : error);
       return [];
     }
   }
@@ -341,7 +315,7 @@ export class DanmakuService {
         const xmlText = await response.text();
         return this.parseXMLDanmaku(xmlText);
       } catch (error) {
-        console.log(`XML API ${apiUrl} 请求失败:`, error);
+        console.log(`XML API ${apiUrl} 请求失败:`, error instanceof Error ? error.message : error);
         continue;
       }
     }
@@ -380,7 +354,7 @@ export class DanmakuService {
 
       return [];
     } catch (error) {
-      console.error('JSON API 请求失败:', error);
+      console.error('JSON API 请求失败:', error instanceof Error ? error.message : error);
       return [];
     }
   }
@@ -429,12 +403,16 @@ export class DanmakuService {
     uniqueDanmaku.sort((a, b) => a.time - b.time);
 
     // 过滤无效弹幕
-    return uniqueDanmaku.filter(item => 
+    const filtered = uniqueDanmaku.filter(item => 
       item.text && 
       item.text.length > 0 && 
       item.text.length < 100 && 
       item.time >= 0
     );
+
+    console.log(`🎯 弹幕处理完成: 原始 ${danmaku.length} 条 -> 去重 ${uniqueDanmaku.length} 条 -> 过滤 ${filtered.length} 条`);
+    
+    return filtered;
   }
 
   /**
@@ -455,6 +433,7 @@ export class DanmakuService {
         timestamp: Date.now(),
       };
       await AsyncStorage.setItem(key, JSON.stringify(cacheData));
+      console.log(`💾 弹幕缓存保存成功: ${danmaku.length} 条`);
     } catch (error) {
       console.error('缓存弹幕失败:', error);
     }

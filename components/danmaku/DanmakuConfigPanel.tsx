@@ -62,11 +62,11 @@ export const DanmakuConfigPanel: React.FC<DanmakuConfigPanelProps> = ({
             <ThemedText style={styles.sliderButtonText}>-</ThemedText>
           </TouchableOpacity>
           <View style={styles.sliderTrack}>
-            <View 
+            <View
               style={[
-                styles.sliderFill, 
+                styles.sliderFill,
                 { width: `${((value - min) / (max - min)) * 100}%` }
-              ]} 
+              ]}
             />
           </View>
           <TouchableOpacity onPress={handleIncrease} style={styles.sliderButton}>
@@ -111,7 +111,7 @@ export const DanmakuConfigPanel: React.FC<DanmakuConfigPanelProps> = ({
           {/* 基础设置 */}
           <View style={styles.section}>
             <ThemedText style={styles.sectionTitle}>基础设置</ThemedText>
-            
+
             <SwitchItem
               title="启用弹幕"
               value={config.enabled}
@@ -169,7 +169,7 @@ export const DanmakuConfigPanel: React.FC<DanmakuConfigPanelProps> = ({
           {/* 显示类型 */}
           <View style={styles.section}>
             <ThemedText style={styles.sectionTitle}>显示类型</ThemedText>
-            
+
             <SwitchItem
               title="滚动弹幕"
               value={config.showScroll}
@@ -192,7 +192,7 @@ export const DanmakuConfigPanel: React.FC<DanmakuConfigPanelProps> = ({
           {/* 过滤设置 */}
           <View style={styles.section}>
             <ThemedText style={styles.sectionTitle}>过滤设置</ThemedText>
-            
+
             <ConfigItem title={`过滤等级: ${getFilterLevelText(config.filterLevel)}`}>
               <View style={styles.filterButtons}>
                 {[0, 1, 2, 3].map((level) => (
@@ -221,7 +221,7 @@ export const DanmakuConfigPanel: React.FC<DanmakuConfigPanelProps> = ({
           {/* 预设方案 */}
           <View style={styles.section}>
             <ThemedText style={styles.sectionTitle}>预设方案</ThemedText>
-            
+
             <View style={styles.presetButtons}>
               <TouchableOpacity
                 style={styles.presetButton}
@@ -229,14 +229,14 @@ export const DanmakuConfigPanel: React.FC<DanmakuConfigPanelProps> = ({
               >
                 <ThemedText style={styles.presetButtonText}>性能优先</ThemedText>
               </TouchableOpacity>
-              
+
               <TouchableOpacity
                 style={styles.presetButton}
                 onPress={() => applyPreset('balanced', onConfigChange)}
               >
                 <ThemedText style={styles.presetButtonText}>平衡模式</ThemedText>
               </TouchableOpacity>
-              
+
               <TouchableOpacity
                 style={styles.presetButton}
                 onPress={() => applyPreset('quality', onConfigChange)}

@@ -11,8 +11,8 @@ import { SpeedSelectionModal } from "@/components/SpeedSelectionModal";
 import { SeekingBar } from "@/components/SeekingBar";
 // import { NextEpisodeOverlay } from "@/components/NextEpisodeOverlay";
 import VideoLoadingAnimation from "@/components/VideoLoadingAnimation";
-import { SimpleDanmakuOverlay } from "@/components/danmaku/SimpleDanmakuOverlay";
-import { DanmakuDebugInfo } from "@/components/danmaku/DanmakuDebugInfo";
+import { ArtPlayerStyleDanmaku } from "@/components/danmaku/ArtPlayerStyleDanmaku";
+// 调试信息已集成到滚动弹幕组件中
 // 移除基础测试组件导入
 import { DanmakuConfigPanel } from "@/components/danmaku/DanmakuConfigPanel";
 import useDetailStore from "@/stores/detailStore";
@@ -174,7 +174,17 @@ export default function PlayScreen() {
         logger.info(`🎯 弹幕加载完成: ${danmaku.length} 条`);
         
         if (danmaku.length > 0) {
-          Toast.show({ type: 'success', text1: `弹幕加载成功 (${danmaku.length}条)` });
+          Toast.show({ 
+            type: 'success', 
+            text1: `弹幕加载成功`, 
+            text2: `获取到 ${danmaku.length} 条弹幕数据` 
+          });
+        } else {
+          Toast.show({ 
+            type: 'info', 
+            text1: '未找到弹幕数据', 
+            text2: '该视频可能暂无弹幕' 
+          });
         }
       } catch (error) {
         logger.error('弹幕加载失败:', error);
@@ -291,16 +301,15 @@ export default function PlayScreen() {
 
         <SeekingBar />
 
-        {/* 弹幕渲染层 - 使用简化版本进行测试 */}
-        <SimpleDanmakuOverlay
+        {/* 弹幕渲染层 - ArtPlayer 风格弹幕系统 */}
+        <ArtPlayerStyleDanmaku
           danmakuList={danmakuList}
           currentTime={status?.positionMillis ? status.positionMillis / 1000 : 0}
           isPlaying={status?.isPlaying || false}
           config={danmakuConfig}
         />
 
-        {/* 弹幕调试信息 */}
-        <DanmakuDebugInfo />
+        {/* 调试信息已集成到滚动弹幕组件中 */}
 
         {/* 基础弹幕测试已移除，现在使用服务层的测试数据 */}
 
