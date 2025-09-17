@@ -328,21 +328,56 @@ export default function PlayScreen() {
             position: 'absolute',
             top: 100,
             left: 20,
-            zIndex: 999
+            zIndex: 999,
+            flexDirection: 'row'
           }}>
             <TouchableOpacity
               style={{
                 backgroundColor: 'rgba(0, 255, 0, 0.8)',
-                padding: 10,
+                padding: 8,
+                borderRadius: 5,
+                marginRight: 10,
+              }}
+              onPress={async () => {
+                const { DanmakuDebug } = await import('@/utils/danmakuDebug');
+                DanmakuDebug.diagnose();
+              }}
+            >
+              <Text style={{ color: 'white', fontSize: 10 }}>
+                弹幕诊断
+              </Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={{
+                backgroundColor: 'rgba(255, 165, 0, 0.8)',
+                padding: 8,
+                borderRadius: 5,
+                marginRight: 10,
+              }}
+              onPress={async () => {
+                const { DanmakuDebug } = await import('@/utils/danmakuDebug');
+                DanmakuDebug.testDanmakuAPI(title || '测试视频', currentEpisode?.title || '1');
+              }}
+            >
+              <Text style={{ color: 'white', fontSize: 10 }}>
+                测试API
+              </Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={{
+                backgroundColor: 'rgba(255, 0, 0, 0.8)',
+                padding: 8,
                 borderRadius: 5,
               }}
               onPress={async () => {
-                const { DanmakuTest } = await import('@/utils/danmakuTest');
-                DanmakuTest.testDanmakuAPI(title || '测试视频', '1');
+                const { DanmakuDebug } = await import('@/utils/danmakuDebug');
+                DanmakuDebug.clearCache();
               }}
             >
-              <Text style={{ color: 'white', fontSize: 12 }}>
-                测试弹幕API
+              <Text style={{ color: 'white', fontSize: 10 }}>
+                清理缓存
               </Text>
             </TouchableOpacity>
           </View>

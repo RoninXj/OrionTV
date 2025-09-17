@@ -122,8 +122,8 @@ export class DanmakuService {
    */
   private static async getInfinityTVBaseUrl(): Promise<string> {
     try {
-      // 方法1: 尝试从 AsyncStorage 获取设置
-      const settingsStr = await AsyncStorage.getItem('settings');
+      // 使用正确的存储键 'mytv_settings'
+      const settingsStr = await AsyncStorage.getItem('mytv_settings');
       if (settingsStr) {
         const settings = JSON.parse(settingsStr);
         if (settings.apiBaseUrl && settings.apiBaseUrl.trim()) {
@@ -133,7 +133,7 @@ export class DanmakuService {
         }
       }
 
-      // 方法2: 尝试从其他可能的存储位置获取
+      // 备用方法: 尝试从其他可能的存储位置获取
       const apiBaseUrl = await AsyncStorage.getItem('apiBaseUrl');
       if (apiBaseUrl && apiBaseUrl.trim()) {
         const baseUrl = apiBaseUrl.replace(/\/$/, '');
